@@ -1,0 +1,102 @@
+# HookLens
+
+A lightweight webhook debugger that receives webhooks locally and displays them in a real-time browser GUI.
+
+## Features
+
+- **Real-time Display**: Webhooks appear instantly via Server-Sent Events (SSE)
+- **Zero Dependencies**: Uses only Python standard library (no pip install required)
+- **Dark Mode UI**: Clean, modern interface with monospace fonts
+- **JSON Formatting**: Automatic pretty-printing with syntax highlighting
+- **Copy Functionality**: One-click copy for URLs, headers, body, and individual JSON values
+- **Accordion View**: Expandable/collapsible request details
+- **Multi-method Support**: Handles GET, POST, PUT, DELETE, and PATCH requests
+
+## Requirements
+
+- Python 3.7 or higher
+
+## Installation
+
+No installation required. Simply download `hooklens.py` and run it.
+
+```bash
+git clone git@github.com:Shintaro-run/HookLens.git
+cd HookLens
+```
+
+## Usage
+
+### Start the server
+
+```bash
+# Default port (8080)
+python hooklens.py
+
+# Custom port
+python hooklens.py --port 9000
+```
+
+### Access the GUI
+
+Open your browser and navigate to:
+```
+http://localhost:8080
+```
+
+### Send webhooks
+
+Send webhooks to:
+```
+http://localhost:8080/webhook
+```
+
+Example with curl:
+```bash
+curl -X POST http://localhost:8080/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"event": "user.created", "data": {"id": 123, "name": "John"}}'
+```
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Web GUI |
+| GET | `/events` | SSE stream for real-time updates |
+| POST | `/webhook` | Receive webhooks |
+| GET | `/webhook` | Receive webhooks (also supported) |
+| PUT | `/webhook` | Receive webhooks (also supported) |
+| DELETE | `/webhook` | Receive webhooks (also supported) |
+| PATCH | `/webhook` | Receive webhooks (also supported) |
+
+## GUI Features
+
+### Request Display
+- Timestamp
+- HTTP method (color-coded badge)
+- Request path
+- Headers table
+- Body with JSON syntax highlighting
+
+### Copy Functions
+- **Endpoint URL**: Copy the webhook endpoint URL
+- **Headers**: Copy all headers as JSON
+- **Body**: Copy the entire request body
+- **JSON Values**: Click any key or value to copy it
+
+### Controls
+- **Clear All**: Remove all logged requests
+- **Accordion**: Click request header to expand/collapse details
+
+## Screenshots
+
+The interface features:
+- Dark theme (background: #0d1117, text: #c9d1d9)
+- Connection status indicator
+- Endpoint URL display with copy button
+- Request list with expandable details
+
+## License
+
+Copyright (c) HookLens contributors - by LV3

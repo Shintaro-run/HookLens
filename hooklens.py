@@ -150,6 +150,27 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             background-color: #21262d;
             color: #c9d1d9;
         }
+        .test-btn {
+            background-color: #238636;
+            border: 1px solid #238636;
+            color: #ffffff;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .test-btn:hover {
+            background-color: #2ea043;
+            border-color: #2ea043;
+        }
+        .test-btn:disabled {
+            background-color: #21262d;
+            border-color: #30363d;
+            color: #8b949e;
+            cursor: not-allowed;
+        }
         .no-requests {
             text-align: center;
             padding: 60px 20px;
@@ -363,6 +384,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             <div class="endpoint-url">
                 <code id="endpointUrl"></code>
                 <button class="copy-btn" onclick="copyEndpoint()">Copy</button>
+                <button class="test-btn" id="testBtn" onclick="sendTestWebhook()">Send Test</button>
             </div>
         </div>
 
@@ -561,6 +583,51 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         function clearLogs() {
             requests = [];
             renderRequests();
+        }
+
+        function sendTestWebhook() {
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            const testPayload = {
+                event: 'test.webhook',
+                timestamp: new Date().toISOString(),
+                data: {
+                    message: 'This is a test webhook from HookLens',
+                    id: Math.random().toString(36).substring(2, 10),
+                    nested: {
+                        number: 42,
+                        boolean: true,
+                        array: [1, 2, 3],
+                        null_value: null
+                    }
+                }
+            };
+
+            fetch('/webhook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Test-Header': 'HookLens-Test',
+                    'X-Request-Id': crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2)
+                },
+                body: JSON.stringify(testPayload)
+            })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Test webhook sent!');
+                } else {
+                    showToast('Failed to send test webhook');
+                }
+            })
+            .catch(err => {
+                showToast('Error: ' + err.message);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = 'Send Test';
+            });
         }
 
         function escapeHtml(str) {

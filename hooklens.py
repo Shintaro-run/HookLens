@@ -150,6 +150,32 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             background-color: #21262d;
             color: #c9d1d9;
         }
+        .export-btn {
+            background-color: #1f6feb;
+            border: 1px solid #1f6feb;
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            transition: background-color 0.2s;
+            margin-right: 8px;
+        }
+        .export-btn:hover {
+            background-color: #388bfd;
+            border-color: #388bfd;
+        }
+        .export-btn:disabled {
+            background-color: #21262d;
+            border-color: #30363d;
+            color: #8b949e;
+            cursor: not-allowed;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
         .no-requests {
             text-align: center;
             padding: 60px 20px;
@@ -369,7 +395,10 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         <div class="logs-section">
             <div class="logs-header">
                 <span class="logs-title">Request Log</span>
-                <button class="clear-btn" onclick="clearLogs()">Clear All</button>
+                <div class="header-buttons">
+                    <button class="export-btn" id="exportBtn" onclick="exportData()">Export JSON</button>
+                    <button class="clear-btn" onclick="clearLogs()">Clear All</button>
+                </div>
             </div>
             <div id="requestList" class="request-list">
                 <div class="no-requests" id="noRequests">
@@ -427,16 +456,16 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
 
         function renderRequests() {
             const container = document.getElementById('requestList');
-            const noRequests = document.getElementById('noRequests');
 
             if (requests.length === 0) {
-                noRequests.style.display = 'block';
-                container.innerHTML = '';
-                container.appendChild(noRequests);
+                container.innerHTML = '<div class="no-requests" id="noRequests">' +
+                    '<div class="no-requests-icon">&#128229;</div>' +
+                    '<div>No requests yet</div>' +
+                    '<div style="margin-top: 8px; font-size: 12px;">Send a webhook to the endpoint above</div>' +
+                '</div>';
                 return;
             }
 
-            noRequests.style.display = 'none';
             container.innerHTML = requests.map((req, index) => createRequestHTML(req, index)).join('');
         }
 
@@ -572,6 +601,32 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         function clearLogs() {
             requests = [];
             renderRequests();
+        }
+
+        function exportData() {
+            if (requests.length === 0) {
+                showToast('No data to export');
+                return;
+            }
+            const now = new Date();
+            const timestamp = now.getFullYear() +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') +
+                String(now.getMinutes()).padStart(2, '0') +
+                String(now.getSeconds()).padStart(2, '0');
+            const filename = 'hooklens_' + timestamp + '.json';
+            const data = JSON.stringify(requests, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Exported ' + requests.length + ' request(s)');
         }
 
         function escapeHtml(str) {

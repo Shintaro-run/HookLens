@@ -47,7 +47,6 @@ A lightweight webhook debugger that receives webhooks locally and displays them 
 - **Copy Functionality**: One-click copy for URLs, headers, body, and individual JSON values
 - **Accordion View**: Expandable/collapsible request details
 - **Multi-method Support**: Handles GET, POST, PUT, DELETE, and PATCH requests
-- **Built-in Test**: Send test webhooks directly from the UI
 
 ## Requirements
 
@@ -95,10 +94,6 @@ curl -X POST http://localhost:8080/webhook \
   -d '{"event": "user.created", "data": {"id": 123, "name": "John"}}'
 ```
 
-### Test Button
-
-Click the **Send Test** button in the GUI to instantly send a sample webhook. This allows you to verify the setup is working without any external tools.
-
 ## Endpoints
 
 | Method | Path | Description |
@@ -127,7 +122,6 @@ Click the **Send Test** button in the GUI to instantly send a sample webhook. Th
 - **JSON Values**: Click any key or value to copy it
 
 ### Controls
-- **Send Test**: Send a test webhook to verify setup
 - **Clear All**: Remove all logged requests
 - **Accordion**: Click request header to expand/collapse details
 
@@ -136,7 +130,7 @@ Click the **Send Test** button in the GUI to instantly send a sample webhook. Th
 The interface features:
 - Dark theme (background: #0d1117, text: #c9d1d9)
 - Connection status indicator
-- Endpoint URL display with copy and test buttons
+- Endpoint URL display with copy button
 - Request list with expandable details
 
 ## License

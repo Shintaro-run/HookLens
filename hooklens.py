@@ -150,27 +150,6 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             background-color: #21262d;
             color: #c9d1d9;
         }
-        .test-btn {
-            background-color: #238636;
-            border: 1px solid #238636;
-            color: #ffffff;
-            padding: 10px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-family: inherit;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-        .test-btn:hover {
-            background-color: #2ea043;
-            border-color: #2ea043;
-        }
-        .test-btn:disabled {
-            background-color: #21262d;
-            border-color: #30363d;
-            color: #8b949e;
-            cursor: not-allowed;
-        }
         .no-requests {
             text-align: center;
             padding: 60px 20px;
@@ -384,7 +363,6 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             <div class="endpoint-url">
                 <code id="endpointUrl"></code>
                 <button class="copy-btn" onclick="copyEndpoint()">Copy</button>
-                <button class="test-btn" id="testBtn" onclick="sendTestWebhook()">Send Test</button>
             </div>
         </div>
 
@@ -481,6 +459,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             }
 
             const headersJson = JSON.stringify(req.headers, null, 2);
+            const reqId = 'req-' + index;
 
             return '<div class="request-item" id="request-' + index + '">' +
                 '<div class="request-header" onclick="toggleRequest(' + index + ')">' +
@@ -493,16 +472,18 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                     '<div class="section">' +
                         '<div class="section-header">' +
                             '<span class="section-title">Headers</span>' +
-                            '<button class="copy-btn" onclick="event.stopPropagation(); copyText(\'' + escapeJs(headersJson) + '\')">Copy</button>' +
+                            '<button class="copy-btn" data-copy="' + reqId + '-headers" onclick="event.stopPropagation(); copyById(this.dataset.copy)">Copy</button>' +
                         '</div>' +
                         '<table class="headers-table"><tbody>' + headersHTML + '</tbody></table>' +
+                        '<pre id="' + reqId + '-headers" style="display:none">' + escapeHtml(headersJson) + '</pre>' +
                     '</div>' +
                     '<div class="section">' +
                         '<div class="section-header">' +
                             '<span class="section-title">Body</span>' +
-                            '<button class="copy-btn" onclick="event.stopPropagation(); copyText(\'' + escapeJs(req.body || '') + '\')">Copy</button>' +
+                            '<button class="copy-btn" data-copy="' + reqId + '-body" onclick="event.stopPropagation(); copyById(this.dataset.copy)">Copy</button>' +
                         '</div>' +
                         '<div class="json-content">' + bodyHTML + '</div>' +
+                        '<pre id="' + reqId + '-body" style="display:none">' + escapeHtml(req.body || '') + '</pre>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -510,24 +491,25 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
 
         function formatJSON(obj, indent) {
             if (obj === null) {
-                return '<span class="json-null" onclick="copyValue(\'null\')">null</span>';
+                return '<span class="json-null" onclick="copyValue(this.textContent)">null</span>';
             }
             if (typeof obj === 'boolean') {
-                return '<span class="json-boolean" onclick="copyValue(\'' + obj + '\')">' + obj + '</span>';
+                return '<span class="json-boolean" onclick="copyValue(this.textContent)">' + obj + '</span>';
             }
             if (typeof obj === 'number') {
-                return '<span class="json-number" onclick="copyValue(\'' + obj + '\')">' + obj + '</span>';
+                return '<span class="json-number" onclick="copyValue(this.textContent)">' + obj + '</span>';
             }
             if (typeof obj === 'string') {
-                return '<span class="json-string" onclick="copyValue(\'' + escapeJs(obj) + '\')">"' + escapeHtml(obj) + '"</span>';
+                return '<span class="json-string" onclick="copyValue(this.textContent.slice(1,-1))">"' + escapeHtml(obj) + '"</span>';
             }
             if (Array.isArray(obj)) {
                 if (obj.length === 0) {
                     return '<span class="json-bracket">[]</span>';
                 }
                 const newIndent = indent + '  ';
-                const items = obj.map(item => newIndent + formatJSON(item, newIndent)).join(',\\n');
-                return '<span class="json-bracket">[</span>\\n' + items + '\\n' + indent + '<span class="json-bracket">]</span>';
+                const NL = String.fromCharCode(10);
+                const items = obj.map(item => newIndent + formatJSON(item, newIndent)).join(',' + NL);
+                return '<span class="json-bracket">[</span>' + NL + items + NL + indent + '<span class="json-bracket">]</span>';
             }
             if (typeof obj === 'object') {
                 const keys = Object.keys(obj);
@@ -535,12 +517,12 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                     return '<span class="json-bracket">{}</span>';
                 }
                 const newIndent = indent + '  ';
+                const NL = String.fromCharCode(10);
                 const items = keys.map(key => {
                     const value = obj[key];
-                    const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
-                    return newIndent + '<span class="json-key" onclick="copyValue(\'' + escapeJs(valueStr) + '\')">"' + escapeHtml(key) + '"</span>: ' + formatJSON(value, newIndent);
-                }).join(',\\n');
-                return '<span class="json-bracket">{</span>\\n' + items + '\\n' + indent + '<span class="json-bracket">}</span>';
+                    return newIndent + '<span class="json-key" data-value="' + escapeHtml(typeof value === 'string' ? value : JSON.stringify(value)) + '" onclick="copyValue(this.dataset.value)">"' + escapeHtml(key) + '"</span>: ' + formatJSON(value, newIndent);
+                }).join(',' + NL);
+                return '<span class="json-bracket">{</span>' + NL + items + NL + indent + '<span class="json-bracket">}</span>';
             }
             return escapeHtml(String(obj));
         }
@@ -561,6 +543,13 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
 
         function copyValue(value) {
             copyToClipboard(value);
+        }
+
+        function copyById(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                copyToClipboard(el.textContent);
+            }
         }
 
         function copyToClipboard(text) {
@@ -585,51 +574,6 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             renderRequests();
         }
 
-        function sendTestWebhook() {
-            const btn = document.getElementById('testBtn');
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-
-            const testPayload = {
-                event: 'test.webhook',
-                timestamp: new Date().toISOString(),
-                data: {
-                    message: 'This is a test webhook from HookLens',
-                    id: Math.random().toString(36).substring(2, 10),
-                    nested: {
-                        number: 42,
-                        boolean: true,
-                        array: [1, 2, 3],
-                        null_value: null
-                    }
-                }
-            };
-
-            fetch('/webhook', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Test-Header': 'HookLens-Test',
-                    'X-Request-Id': crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2)
-                },
-                body: JSON.stringify(testPayload)
-            })
-            .then(response => {
-                if (response.ok) {
-                    showToast('Test webhook sent!');
-                } else {
-                    showToast('Failed to send test webhook');
-                }
-            })
-            .catch(err => {
-                showToast('Error: ' + err.message);
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.textContent = 'Send Test';
-            });
-        }
-
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
             return String(str)
@@ -638,17 +582,6 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
-        }
-
-        function escapeJs(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/\\\\/g, '\\\\\\\\')
-                .replace(/'/g, "\\\\'")
-                .replace(/"/g, '\\\\"')
-                .replace(/\\n/g, '\\\\n')
-                .replace(/\\r/g, '\\\\r')
-                .replace(/\\t/g, '\\\\t');
         }
 
         init();

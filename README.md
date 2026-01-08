@@ -125,13 +125,16 @@ curl -X POST http://localhost:8080/webhook \
 - **Clear All**: Remove all logged requests
 - **Accordion**: Click request header to expand/collapse details
 
-## Screenshots
+## Screenshot
+
+![HookLens UI](screenshot.png)
 
 The interface features:
 - Dark theme (background: #0d1117, text: #c9d1d9)
 - Connection status indicator
 - Endpoint URL display with copy button
 - Request list with expandable details
+- Export JSON button for data backup
 
 ## License
 
